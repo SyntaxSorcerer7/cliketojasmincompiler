@@ -8,8 +8,8 @@ const std::string printPrefixCode = "getstatic java/lang/System/out Ljava/io/Pri
 const std::string printPostCode = "invokevirtual java/io/PrintStream/println(I)V\n";
 std::string jasminCode = "";
 int labelCount = 0;
-int stackSize = 0;
-int maxStackSize =0;
+int stackSize = 1;
+int maxStackSize =1;
 
 void traverseSyntaxTree(TreeNode *node);
 
@@ -41,9 +41,9 @@ std::string getCompleteCode(std::string instructions){
 }
 
 std::string generateJasminCode(TreeNode *node){
-    stackSize=0;
+    stackSize=1;
     labelCount=0;
-    maxStackSize=0;
+    maxStackSize=1;
     jasminCode="";
     traverseSyntaxTree(node);
     return getCompleteCode(jasminCode);
