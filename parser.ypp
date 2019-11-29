@@ -1,0 +1,109 @@
+/* example.y */
+
+%{
+#include <stdio.h>
+#include "global.hpp"
+extern int yyerror(char const *msg);
+extern int yylex();
+TreeNode* mkleaf(int type, int value);
+TreeNode* mknode(int type, TreeNode* a0, TreeNode* a1, TreeNode* a2);
+void finishCompilation(TreeNode* root);
+%}
+%union {  struct TreeNode* p; int i; };
+
+
+%token READ PRINT IF ELSE LCURLY RCURLY SEMICOLON DOUBLEPOINT WHILE CONDITIONAL EQUAL MOD ID DONE PLUS MINUS STAR LPAREN RPAREN NUMBER DIVISION BITAND BITOR SMALLER BIGGER
+%right CONDITIONAL DOUBLEPOINT 
+%left BITOR
+%left BITAND
+%left SMALLER BIGGER
+%left PLUS MINUS
+%left STAR DIVISION MOD
+
+
+%type <p> start;
+%type <p> block;
+%type <p> expr;
+%type <p> assign;
+%type <p> lvalid;
+%type <p> ifcond;
+%type <p> optelse;
+%type <p> loop;
+%type <p> printfunc;
+%type <p> readfunc;
+%type <i> ID;
+%type <i> NUMBER;
+
+
+%%
+start : block DONE { $$=$1; finishCompilation($1);   }
+block : /*empty*/ { $$=0;}
+     | assign SEMICOLON block   { $$ = mknode(SEMICOLON, $1, $3, 0); }
+     | printfunc SEMICOLON block { $$ = mknode(SEMICOLON, $1, $3, 0); }  
+     | readfunc SEMICOLON block { $$ = mknode(SEMICOLON, $1, $3, 0); }  
+     | loop block     { $$ = mknode(SEMICOLON, $1, $2, 0); }
+     | ifcond block       { $$ = mknode(SEMICOLON, $1, $2, 0); }
+assign : lvalid EQUAL expr        { $$ = mknode(EQUAL, $1, $3, 0); }
+lvalid : ID                   { $$ = mkleaf(ID, $1); }
+loop  : WHILE LPAREN expr RPAREN LCURLY block RCURLY { $$ = mknode(WHILE, $3, $6, 0); }
+ifcond : IF LPAREN expr RPAREN LCURLY block RCURLY optelse { $$ = mknode(IF, $3, $6, $8); }
+optelse : { $$=0; } 
+      | ELSE LCURLY block RCURLY { $$ = $3; }
+printfunc: PRINT LPAREN expr RPAREN { $$ = mknode(PRINT, $3, 0, 0); }
+readfunc:  READ LPAREN lvalid RPAREN { $$ = mknode(READ, $3, 0, 0); }
+expr : LPAREN expr RPAREN     { $$ = $2; }
+     | expr BIGGER expr       {  $$ = mknode(BIGGER, $1, $3, 0); }     
+     | expr SMALLER expr      {  $$ = mknode(SMALLER, $1, $3, 0); }
+     | expr BITAND expr	      {  $$ = mknode(BITAND, $1, $3, 0); }
+     | expr BITOR expr	      {  $$ = mknode(BITOR, $1, $3, 0);  }
+     | expr PLUS expr         {    $$ = mknode(PLUS, $1, $3, 0);  }
+     | expr MINUS expr        {   $$ = mknode(MINUS, $1, $3, 0);  }
+     | expr STAR expr         {   $$ = mknode(STAR, $1, $3, 0);  }
+     | expr DIVISION expr     {   $$ = mknode(DIVISION, $1, $3, 0);  }
+     | expr MOD expr          { $$ = mknode(MOD, $1, $3, 0);  }
+     | NUMBER                 { $$ = mkleaf(NUMBER, $1);   }
+     | ID                     { $$ = mkleaf(ID, $1); }
+     | expr CONDITIONAL expr DOUBLEPOINT expr   { $$ = mknode(CONDITIONAL, $1, $3, $5); }
+     ;
+
+%%
+
+void finishCompilation(TreeNode* root){
+  printSyntaxTree(root); 
+  std::string jCode = generateJasminCode(root); 
+  printJasminCode();
+  std::ofstream out("./out/App.l");
+  out << jCode;
+  out.close();
+  TreeNode* optimized = optimizeSyntaxTree(root);
+  exit(0);
+}
+
+int yylex(){
+	return lexan();
+}
+
+void parse(){
+	yyparse();
+}
+
+int yyerror(char const *msg) {
+    printf("yy Error: %s\n", msg);
+    return 0;
+}
+
+TreeNode* mkleaf(int type, int value) {
+  struct TreeNode* p = new TreeNode();
+  p->type = type;
+  p->leaf_value = value;
+  return p;
+}
+
+TreeNode* mknode(int type, TreeNode* a0, TreeNode* a1, TreeNode* a2) {
+  struct TreeNode* p = new TreeNode();
+  p->type = type;
+  p->args[0] = a0;
+  p->args[1] = a1;
+  p->args[2] = a2;
+  return p;
+}

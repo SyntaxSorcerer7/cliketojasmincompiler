@@ -1,0 +1,6 @@
+*.o
+**/.vscode
+*.tab.*
+jasminCompiler
+**/out/*.class
+**/out/*.l
