@@ -1,4 +1,4 @@
-OBJECTS = treeprint.o lexer.o symbol.o interpreter.o init.o error.o main.o parser.tab.o codeoptimizer.o codegenerator.o
+OBJECTS = treeprint.o lexer.o symbol.o init.o error.o main.o parser.tab.o codeoptimizer.o codegenerator.o
 SOURCES = treeprint.cpp lexer.cpp symbol.cpp init.cpp error.cpp main.cpp codegenerator.cpp codeoptimizer.cpp example.y
 EXE = jasminCompiler
 CFLAGS += -Wall -g
@@ -32,9 +32,6 @@ codegenerator.o:	codegenerator.cpp global.hpp symbol.cpp
 
 codeoptimizer.o:	codeoptimizer.cpp global.hpp
 	g++ $(CFLAGS) -c codeoptimizer.cpp
-
-interpreter.o:	interpreter.cpp global.hpp symbol.cpp
-	g++ $(CFLAGS) -c interpreter.cpp 
 
 parser.tab.cpp parser.tab.hpp: parser.ypp
 	bison -d parser.ypp

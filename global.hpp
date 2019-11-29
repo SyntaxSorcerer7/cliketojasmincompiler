@@ -13,21 +13,12 @@
 #define NONE   -1
 #define EOS    '\0'
 
-/*
-#define NUM    256
-#define DIV    257
-#define MOD    258
-#define ID     259
-#define DONE   260
-*/
-
 extern int token_value;   /*  value of token attribute */  
 extern int lineno;
 
 struct symentry {  /*  form of symbol table entry  */
     char *lexeme; 
     int  token_type;    
-    int  variable_value;
 };
 
 #define MAX_ARGS 3
@@ -53,3 +44,4 @@ extern int interpreteST(TreeNode* node);
 extern std::string generateJasminCode(TreeNode *node);
 extern void printJasminCode();
 extern TreeNode* optimizeSyntaxTree(TreeNode* root);
+extern int getNumberOfVariables();

@@ -2,12 +2,14 @@
 #include "global.hpp"
 
 //we should calculate the exact stack height and number of variables 
-std::string prefixCode = ".class public App\n.super java/lang/Object\n.method public static main([Ljava/lang/String;)V\n.limit stack 200\n.limit locals 3\n";
+std::string prefixCode = ".class public App\n.super java/lang/Object\n.method public static main([Ljava/lang/String;)V\n";
 const std::string postfixCode = "return\n.end method";
 const std::string printPrefixCode = "getstatic java/lang/System/out Ljava/io/PrintStream;\n";
 const std::string printPostCode = "invokevirtual java/io/PrintStream/println(I)V\n";
 std::string jasminCode = "";
 int labelCount = 0;
+int stackSize = 0;
+int maxStackSize =0;
 
 void traverseSyntaxTree(TreeNode *node);
 
@@ -24,16 +26,31 @@ std::string createUniqueLabel()
     return "label" + std::to_string(labelCount);
 }
 
+void updateStackSize(int delta = 1){
+    stackSize = stackSize + delta;
+    if(stackSize>maxStackSize){
+        maxStackSize = stackSize;
+    }
+}
+
+std::string getCompleteCode(std::string instructions){
+    return prefixCode 
+    + ".limit stack " + std::to_string(maxStackSize) + "\n"
+    + ".limit locals " + std::to_string(getNumberOfVariables()) + "\n" 
+    + jasminCode + postfixCode;
+}
+
 std::string generateJasminCode(TreeNode *node){
+    stackSize=0;
     labelCount=0;
+    maxStackSize=0;
     jasminCode="";
     traverseSyntaxTree(node);
-    return prefixCode + jasminCode + postfixCode;
-    return jasminCode;
+    return getCompleteCode(jasminCode);
 }
 
 void printJasminCode(){
-    printf((prefixCode+jasminCode+postfixCode).c_str());
+    printf(getCompleteCode(jasminCode).c_str());
 }
 
 std::string createBranchStatement(TreeNode* expressionNode, std::string labelJumpFlase){
@@ -56,11 +73,13 @@ if(node==nullptr){
     }
     switch(node->type){
         case NUMBER: {
+            updateStackSize();
             std::string instr = "sipush " + std::to_string(node->leaf_value);
             addCode(instr);
             break;
         }
         case ID:{
+                updateStackSize();
                 const std::string instr = "iload " + std::to_string(node->leaf_value);
                 addCode(instr);
                 break;
@@ -70,6 +89,7 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "iadd";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }
         case MINUS: {
@@ -77,6 +97,7 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "isub";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }
         case STAR: {
@@ -84,6 +105,7 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "imul";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }
         case DIVISION: {
@@ -91,6 +113,7 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "idiv";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }
         case MOD: {
@@ -98,6 +121,7 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "irem";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }
         case BITAND: {
@@ -105,6 +129,7 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "iand";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }
         case BITOR: {
@@ -112,12 +137,14 @@ if(node==nullptr){
             traverseSyntaxTree(node->args[1]);
             const std::string instr = "ior";
             addCode(instr);
+            updateStackSize(-1);
             break;
         }       
-        case IF: {
+        case IF: {  
             std::string fBranchLabel = createUniqueLabel();
             std::string tBranchLabel = createUniqueLabel();
             addCode(createBranchStatement(node->args[0], fBranchLabel));
+            updateStackSize(-1);
             //push code for true branch
             traverseSyntaxTree(node->args[1]);
             addCode("goto " + tBranchLabel);
@@ -134,6 +161,7 @@ if(node==nullptr){
             addCode(labelBeginLoop+":");
             //evaluate condition
             addCode(createBranchStatement(node->args[0], labelEndLoop));
+            updateStackSize(-1);
             //execute code in loop body
             traverseSyntaxTree(node->args[1]);
             //jump back to beginning of loop
@@ -145,10 +173,10 @@ if(node==nullptr){
         }
         case EQUAL:{
             int symbolTablePos = node->args[0]->leaf_value;
-            
             traverseSyntaxTree(node->args[1]);
             const std::string instr = std::string("istore ").append(std::to_string(symbolTablePos));
             addCode(instr);
+            updateStackSize(-1);
             //Instruction ass(assign);
             //sm->append(ass);
             break;
@@ -164,6 +192,7 @@ if(node==nullptr){
 
             //expression
             addCode(createBranchStatement(node->args[0], fLabel));
+            updateStackSize(-1);
             //jump to false branch if value on stack is false
             //Instruction bf(gofalse, labelNumber);
             //sm->append(bf);
@@ -182,7 +211,8 @@ if(node==nullptr){
         case PRINT:{
             addCode(printPrefixCode);
             traverseSyntaxTree(node->args[0]);
-            addCode(printPostCode);            
+            addCode(printPostCode);        
+            updateStackSize(-1);    
             break;
         }
     }

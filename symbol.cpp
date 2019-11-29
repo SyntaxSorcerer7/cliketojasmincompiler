@@ -7,6 +7,10 @@
 struct symentry symtable[MAX_SYMBOLS];
 int nr_symbols = 0;    /* number of symbols in symtable  */
 
+int getNumberOfVariables(){
+    return nr_symbols;
+}
+
 int lookup(char *s)         /* returns position of entry for s, or -1 if not found */
 {
     for (int p = nr_symbols - 1; p >= 0; --p)

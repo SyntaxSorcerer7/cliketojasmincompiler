@@ -70,12 +70,13 @@ expr : LPAREN expr RPAREN     { $$ = $2; }
 
 void finishCompilation(TreeNode* root){
   printSyntaxTree(root); 
-  std::string jCode = generateJasminCode(root); 
+  TreeNode* optimized = optimizeSyntaxTree(root);
+  printSyntaxTree(optimized);
+  std::string jCode = generateJasminCode(optimized); 
   printJasminCode();
   std::ofstream out("./out/App.l");
   out << jCode;
   out.close();
-  TreeNode* optimized = optimizeSyntaxTree(root);
   exit(0);
 }
 
