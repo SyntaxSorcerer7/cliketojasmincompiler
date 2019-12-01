@@ -12,8 +12,11 @@ int stackSize = 1;
 int maxStackSize =1;
 
 void traverseSyntaxTree(TreeNode *node);
-
-
+void addCode(std::string instruction);
+std::string createUniqueLabel();
+void updateStackSize(int delta = 1);
+std::string getCompleteCode(std::string instructions);
+std::string createBranchStatement(TreeNode* expressionNode, std::string labelJumpFalse)
 
 void addCode(std::string instruction){
     jasminCode = (jasminCode + instruction + "\n");
@@ -53,16 +56,16 @@ void printJasminCode(){
     printf(getCompleteCode(jasminCode).c_str());
 }
 
-std::string createBranchStatement(TreeNode* expressionNode, std::string labelJumpFlase){
+std::string createBranchStatement(TreeNode* expressionNode, std::string labelJumpFalse){
     std::string fBranchLabel = createUniqueLabel();
             traverseSyntaxTree(expressionNode->args[0]);
             traverseSyntaxTree(expressionNode->args[1]);
             if(expressionNode->type==BIGGER){
                 //jump to false branch if this is lower
-                return "if_icmplt " + labelJumpFlase;
+                return "if_icmplt " + labelJumpFalse;
             } else if(expressionNode->type==SMALLER){
                 //jump to false branch if this is bigger
-                return "if_icmpgt " + labelJumpFlase;
+                return "if_icmpgt " + labelJumpFalse;
             }
     throw std::exception();
 }
